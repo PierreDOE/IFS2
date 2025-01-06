@@ -21,7 +21,7 @@ class VIV(object):
         """
         initialisation
         """
-        self.a = par["A"]                       # coupling parameter
+        self.A = par["A"]                       # coupling parameter
         self.M = par["mass_number"]   # Mass number
         self.mu = par["mu"]                     # mass parameter
         self.gamma = par["gamma"]               # fluid added damping coefficient
@@ -33,8 +33,8 @@ class VIV(object):
         self.k_ref = par["k_ref"]
         self.k_lim = par["k_lim"]
 
-        self.kinf = self.u * np.sqrt(1 - self.a * self.M)
-        self.ksup = self.u * np.sqrt(1 + self.a * self.M)
+        self.kinf = self.u * np.sqrt(1 - self.A * self.M)
+        self.ksup = self.u * np.sqrt(1 + self.A * self.M)
 
         self.omega = None
         self.alpha = None
@@ -56,6 +56,7 @@ class VIV(object):
         self.omega = []
         for k in self.k_table:
             self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True))
+        print(self.omega)
 
     def solve_gain(self):
         """
@@ -122,7 +123,9 @@ class VIV(object):
         return the coefficient of the dispersion equation (determinant) 
         also found in self.coefs
         """
-        pass
+        self.coefs = [k ** 2,
+                      k ** 2 + u ** 2 * (1 - self.A * self.M),
+                      u ** 2]
         return self.coefs
 
     def discriminant(self):

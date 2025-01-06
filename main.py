@@ -13,6 +13,8 @@ from numpy.lib.scimath import sqrt as csqrt
 from viv.defaults import default_parameters
 from viv.viv import VIV
 from viv.tools import test_values
+import matplotlib
+matplotlib.use('TkAgg')
 
 #  canevas proposé
 # Ne décommenter que quand l'implémentation est effective
