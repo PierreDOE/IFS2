@@ -22,7 +22,7 @@ class VIV(object):
         initialisation
         """
         self.a = par["A"]                       # coupling parameter
-        self.mass_number = par["mass_number"]   # Mass number
+        self.M = par["mass_number"]   # Mass number
         self.mu = par["mu"]                     # mass parameter
         self.gamma = par["gamma"]               # fluid added damping coefficient
         self.xi = par["xi"]                     # tension cable parameter
@@ -32,7 +32,9 @@ class VIV(object):
         self.option = par["option"]             # various options
         self.k_ref = par["k_ref"]
         self.k_lim = par["k_lim"]
-      
+
+        self.kinf = self.u * np.sqrt(1 - self.a * self.M)
+        self.ksup = self.u * np.sqrt(1 + self.a * self.M)
 
         self.omega = None
         self.alpha = None
@@ -151,7 +153,14 @@ class VIV(object):
         """
 
         """
-        pass
+        plt.title(r"Real part of $\omega$")
+        plt.figure()
+        plt.plot(self.k, np.real(self.omega))
+        plt.xlabel(r"$k$")
+        plt.ylabel(r'$Re(\omega)$')
+        plt.grid()
+        plt.show()
+
 
     def plot_k_omega_imag(self):
         """
