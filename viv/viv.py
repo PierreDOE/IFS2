@@ -56,7 +56,7 @@ class VIV(object):
         self.omega = []
         for k in self.k_table:
             self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True))
-            print(f'k = {k}\tdet = {self.discriminant(k)}\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
+            # print(f'k = {k}\tdet = {self.discriminant(k)}\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
 
 
     def solve_gain(self):
@@ -64,7 +64,11 @@ class VIV(object):
         G(omega) = \hat q / \hat y for omega in an interval
         return gain and phase list for all omega complex variables
         """
-        pass
+        for omg, k in zip(np.array(self.omega), self.k_table):
+            gain = self.A * omg ** 2 / (omg ** 2 - self.u ** 2)
+            self.gain.append(gain)
+            self.phase.append(np.angle(-gain, deg=False))
+            # print(f'omega = {omg} \t gain = {gain)} \t phase = {}')
 
     # ***********************************************
     #  GETTERS
@@ -73,12 +77,22 @@ class VIV(object):
         """
         display eigen values on a nice table
         """
+        test = self.u * np.sqrt(1 - (self.A * self.M) / 4) + 1j * self.u * np.sqrt(self.A * self.M) / 2
+        print('valeurs omega_max à trouvé :', test)
         form = (" %+2.3f +i %+2.3f   " * 4)
-        for omg in np.array(self.omega[1:]):
-            # print(form % (omg[0].real, omg[0].imag, omg[1].real, omg[1].imag,
-            #               omg[2].real, omg[2].imag, omg[3].real, omg[3].imag))
-            print(form % (np.sqrt(omg[0].real), np.sqrt(omg[0].imag), -np.sqrt(omg[0].real), -np.sqrt(omg[0].imag),
-                          np.sqrt(omg[1].real), omg[2].imag, omg[3].real, omg[3].imag))
+        for omg, k in zip(np.array(self.omega[1:]), self.k_table):
+            print(form % (omg[0].real, omg[0].imag, omg[1].real, omg[1].imag,
+                          omg[2].real, omg[2].imag, omg[3].real, omg[3].imag))
+            u = 0
+            
+            for i in omg:
+                if np.abs(i - test) <= (1+1j) * self.epsilon 
+            # r1 = np.sqrt(omg[0])
+            # r2 = -np.sqrt(omg[0])
+            # r3 = np.sqrt(omg[1])
+            # r4 = -np.sqrt(omg[1])
+            # print(form % (r1.real, r1.imag, r2.real, r2.imag,
+            #               r3.real, r3.imag, r4.real, r4.imag))
 
     def get_parameters():
         """
@@ -127,7 +141,9 @@ class VIV(object):
         also found in self.coefs
         """
         self.coefs = [1,
-                      k ** 2 + u ** 2 * (1 - self.A * self.M),
+                      0,
+                      - k ** 2 - u ** 2 * (1 - self.A * self.M),
+                      0,
                       k ** 2 * u ** 2]
         return self.coefs
 
@@ -161,9 +177,9 @@ class VIV(object):
         """
 
         """
-        plt.title(r"Real part of $\omega$")
         plt.figure()
-        plt.plot(self.k, np.real(self.omega))
+        plt.title(r"Real part of $\omega$")
+        plt.plot(self.k_table, np.abs(np.real(self.omega)), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Re(\omega)$')
         plt.grid()
@@ -172,19 +188,44 @@ class VIV(object):
 
     def plot_k_omega_imag(self):
         """
-
+        Complex part of omega for k
         """
-        pass
+        # roots = np.zeros_like(self.k_table)
+        # u = 0
+        # for i in np.abs(np.imag(self.omega)):
+        #     for j in i:
+        #         if j != any.roots[u]:
+        #             roots[u] = j
+        #     u += 1
+        plt.figure()
+        plt.title(r"Complexe part of $\omega$")
+        plt.plot(self.k_table, np.imag(self.omega), 'o')
+        plt.xlabel(r"$k$")
+        plt.ylabel(r'$Im(\omega)$')
+        plt.grid()
+        plt.show()
 
     def plot_k_gain_modulus(self):
         """
 
         """
-        pass
+        plt.figure()
+        plt.title(r"Real part of $\omega$")
+        plt.plot(self.k_table, np.abs(self.gain), 'o')
+        plt.xlabel(r"$k$")
+        plt.ylabel(r'$Re(\omega)$')
+        plt.grid()
+        plt.show()
 
     def plot_k_gain_phase(self):
         """
 
         """
-        pass
+        plt.figure()
+        plt.title(r"Real part of $\omega$")
+        plt.plot(self.k_table, self.phase, 'o')
+        plt.xlabel(r"$k$")
+        plt.ylabel(r'$Re(\omega)$')
+        plt.grid()
+        plt.show()
 
