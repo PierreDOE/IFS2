@@ -56,7 +56,8 @@ class VIV(object):
         self.omega = []
         for k in self.k_table:
             self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True))
-        print(self.omega)
+            print(f'k = {k}\tdet = {self.discriminant(k)}\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
+
 
     def solve_gain(self):
         """
@@ -73,9 +74,11 @@ class VIV(object):
         display eigen values on a nice table
         """
         form = (" %+2.3f +i %+2.3f   " * 4)
-        for omg in np.array(self.omega):
-            print(form % (omg[0].real, omg[0].imag, omg[1].real, omg[1].imag,
-                          omg[2].real, omg[2].imag, omg[3].real, omg[3].imag))
+        for omg in np.array(self.omega[1:]):
+            # print(form % (omg[0].real, omg[0].imag, omg[1].real, omg[1].imag,
+            #               omg[2].real, omg[2].imag, omg[3].real, omg[3].imag))
+            print(form % (np.sqrt(omg[0].real), np.sqrt(omg[0].imag), -np.sqrt(omg[0].real), -np.sqrt(omg[0].imag),
+                          np.sqrt(omg[1].real), omg[2].imag, omg[3].real, omg[3].imag))
 
     def get_parameters():
         """
@@ -123,16 +126,18 @@ class VIV(object):
         return the coefficient of the dispersion equation (determinant) 
         also found in self.coefs
         """
-        self.coefs = [k ** 2,
+        self.coefs = [1,
                       k ** 2 + u ** 2 * (1 - self.A * self.M),
-                      u ** 2]
+                      k ** 2 * u ** 2]
         return self.coefs
 
-    def discriminant(self):
+    def discriminant(self,k):
         """
         discriminant with nu = 0
         """
-        pass
+        self.set_k_table()
+        self.set_polynomial_coefs(k, self.u)
+        return self.coefs[1] ** 2 - 4 * self.coefs[0] * self.coefs[2]
 
     def set_transfer_function(self, omega):
         """
@@ -182,3 +187,4 @@ class VIV(object):
 
         """
         pass
+
