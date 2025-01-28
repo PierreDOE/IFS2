@@ -49,17 +49,23 @@ class VIV(object):
     # ***********************************************
     #  SOLVER
     # ***********************************************
-    def solve_omega(self):
+    def solve_omega(self, info=False, print_='else'):
         """
         return the roots of the dispersion equation
         """
         set_section("solve omega")
         self.set_k_table()
         self.omega = []
+        i = 0
         for k in self.k_table:
             self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True))
-            # print(f'k = {k}\tdet = {self.discriminant(k)}\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
-
+            if print_ != 'all':
+                cond = i % 5 == 0
+            else:
+                cond = True
+            if info and cond:
+                print(f'k = {k:.2f}\tdiscriminant = {self.discriminant(k):.2f}\t\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
+            i += 1
 
     def solve_gain(self):
         """
@@ -79,6 +85,7 @@ class VIV(object):
         """
         display eigen values on a nice table
         """
+        set_section("Get omega")
         test = self.u * np.sqrt(1 - (self.A * self.M) / 4) + 1j * self.u * np.sqrt(self.A * self.M) / 2
         print('valeurs omega_max à trouvé :', test)
         form = (" %+2.3f +i %+2.3f   " * 4)
@@ -164,7 +171,7 @@ class VIV(object):
         """
         self.set_k_table()
         self.set_polynomial_coefs(k, self.u)
-        return self.coefs[1] ** 2 - 4 * self.coefs[0] * self.coefs[2]
+        return self.coefs[2] ** 2 - 4 * self.coefs[0] * self.coefs[4]
 
     def set_transfer_function(self, omega):
         """
@@ -189,11 +196,12 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title(r"Real part of $\omega$")
+        plt.title("Real part of $\\omega$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.abs(np.real(self.omega)), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Re(\omega)$')
         plt.grid()
+        plt.savefig('Re_omega_k.png')
         plt.show()
 
 
@@ -209,11 +217,12 @@ class VIV(object):
         #             roots[u] = j
         #     u += 1
         plt.figure()
-        plt.title(r"Complexe part of $\omega$")
+        plt.title("Complexe part of $\\omega$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.imag(self.omega), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Im(\omega)$')
         plt.grid()
+        plt.savefig('Im_omega_k.png')
         plt.show()
 
     def plot_k_gain_modulus(self):
@@ -221,11 +230,12 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title(r"Real part of $\omega$")
+        plt.title(r"Modulus of $\omega$\nRivière & Doerfler")
         plt.plot(self.k_table, np.abs(self.gain), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Re(\omega)$')
         plt.grid()
+        plt.savefig('modulus_omega_k')
         plt.show()
 
     def plot_k_gain_phase(self):
@@ -233,10 +243,10 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title(r"Real part of $\omega$")
+        plt.title(r"Gain of $\omega$\nRivière & Doerfler")
         plt.plot(self.k_table, self.phase, 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Re(\omega)$')
         plt.grid()
+        plt.savefig('Gain_omega_k')
         plt.show()
-
