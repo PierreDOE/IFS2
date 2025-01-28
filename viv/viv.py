@@ -75,7 +75,7 @@ class VIV(object):
         for omg, k in zip(np.array(self.omega), self.k_table):
             gain = self.A * omg ** 2 / (omg ** 2 - self.u ** 2)
             self.gain.append(gain)
-            self.phase.append(np.angle(-gain, deg=False))
+            self.phase.append(np.angle(-gain, deg=True))
             # print(f'omega = {omg} \t gain = {gain)} \t phase = {}')
 
     # ***********************************************
@@ -112,13 +112,13 @@ class VIV(object):
             # print(form % (r1.real, r1.imag, r2.real, r2.imag,
             #               r3.real, r3.imag, r4.real, r4.imag))
 
-    def get_parameters():
+    def get_parameters(self):
         """
         display parameters
         """
-        print("alpha                   : %10.5f" % alpha)
-        print("delta                   : %10.5f" % delta)
-        print("beta                    : %10.5f" % beta)
+        print("alpha                   : %10.5f" % self.alpha)
+        print("delta                   : %10.5f" % self.delta)
+        print("beta                    : %10.5f" % self.beta)
         print("u                       : %10.5f" % self.u)
 
     # ***********************************************
@@ -230,10 +230,10 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title(r"Modulus of $\omega$\nRivière & Doerfler")
+        plt.title("Modulus of $G$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.abs(self.gain), 'o')
         plt.xlabel(r"$k$")
-        plt.ylabel(r'$Re(\omega)$')
+        plt.ylabel(r'$|G(\omega)|$')
         plt.grid()
         plt.savefig('modulus_omega_k')
         plt.show()
@@ -243,10 +243,10 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title(r"Gain of $\omega$\nRivière & Doerfler")
+        plt.title("Phase of $G$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, self.phase, 'o')
         plt.xlabel(r"$k$")
-        plt.ylabel(r'$Re(\omega)$')
+        plt.ylabel(r'$\phi_G/\pi$')
         plt.grid()
         plt.savefig('Gain_omega_k')
         plt.show()
