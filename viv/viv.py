@@ -35,8 +35,8 @@ class VIV(object):
         self.k_ref = par["k_ref"]
         self.k_lim = par["k_lim"]
 
-        self.kinf = self.u * np.sqrt(1 - self.A * self.M)
-        self.ksup = self.u * np.sqrt(1 + self.A * self.M)
+        self.kinf = self.u * (1 - np.sqrt(self.A * self.M))
+        self.ksup = self.u * (1 + np.sqrt(self.A * self.M))
 
         self.omega = None
         self.alpha = None
@@ -88,7 +88,7 @@ class VIV(object):
         set_section("Get omega")
         test = self.u * np.sqrt(1 - (self.A * self.M) / 4) + 1j * self.u * np.sqrt(self.A * self.M) / 2
         print('valeurs omega_max à trouvé :', test)
-        form = (" %+2.3f +i %+2.3f   " * 4)
+        form = (" %2.3f %+2.3f i\t\t" * 4)
         closest_distance = float('inf')
         closest_omega = None
         closest_k = None
@@ -101,16 +101,25 @@ class VIV(object):
                     closest_distance = distance
                     closest_omega = omega_val
                     closest_k = k
+
         print(f"L'omega le plus proche de test est : {closest_omega.real:+.3f} +i {closest_omega.imag:+.3f}")
         print(f"Il est associé à k = {closest_k}")
 
+    def get_omega_inf_sup(self):
+        """
+        Retourne les 4 racines de omega correspondant à la valeur de k dans self.k_table la plus proche de k_inf.
+        """
+        set_section("Get omega inf and sup")
+        k_inf_idx = np.argmin(np.abs(self.k_table - self.kinf))
+        k_sup_idx = np.argmin(np.abs(self.k_table - self.ksup))
+        omega_for_k_inf = self.omega[k_inf_idx]
+        omega_for_k_sup = self.omega[k_sup_idx]
+        print(f"Les 4 racines de omega_inf pour k_inf={self.k_table[k_inf_idx]}\u2243{self.kinf} sont :")
+        print(f"Omega inf : \u00b1 {omega_for_k_inf[0].real:.3f} \u00b1 i {omega_for_k_inf[0].imag:.3f}\n")
+        print(f"Les 4 racines de omega_sup pour k_sup={self.k_table[k_sup_idx]}\u2243{self.ksup} sont :")
+        print(f"Omega inf : \u00b1 {omega_for_k_sup[0].real:.3f} \u00b1 i {omega_for_k_sup[0].imag:.3f}")
 
-            # r1 = np.sqrt(omg[0])
-            # r2 = -np.sqrt(omg[0])
-            # r3 = np.sqrt(omg[1])
-            # r4 = -np.sqrt(omg[1])
-            # print(form % (r1.real, r1.imag, r2.real, r2.imag,
-            #               r3.real, r3.imag, r4.real, r4.imag))
+        return omega_for_k_inf
 
     def get_parameters(self):
         """
