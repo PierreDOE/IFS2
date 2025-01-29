@@ -31,9 +31,11 @@ class VIV(object):
         self.nu = par["nu"]                     # 0: no damping, 1 : full case
         self.u = par["u"]                       # reduced flow velocity
         self.epsilon = par["epsilon"]
+        self.beta = self.gamma / self.mu
         self.option = par["option"]             # various options
         self.k_ref = par["k_ref"]
         self.k_lim = par["k_lim"]
+        self.u_lim = par["u_lim"]
 
         self.kinf = self.u * (1 - np.sqrt(self.A * self.M))
         self.ksup = self.u * (1 + np.sqrt(self.A * self.M))
@@ -42,6 +44,7 @@ class VIV(object):
         self.alpha = None
         self.delta = None
         self.k_table = None
+        self.u_table = None
         self.k = self.k_ref
         self.gain, self.phase = [], []
         self.coefs = None
@@ -75,8 +78,7 @@ class VIV(object):
         for omg, k in zip(np.array(self.omega), self.k_table):
             gain = self.A * omg ** 2 / (omg ** 2 - self.u ** 2)
             self.gain.append(gain)
-            self.phase.append(np.angle(-gain, deg=True))
-            # print(f'omega = {omg} \t gain = {gain)} \t phase = {}')
+            self.phase.append(np.angle(-gain, deg=False))
 
     # ***********************************************
     #  GETTERS
@@ -150,6 +152,12 @@ class VIV(object):
         """
         self.k_table = np.linspace(self.k_lim[0], self.k_lim[1], self.k_lim[2])
 
+    def set_u_table(self):
+        """
+        return the array of the non dimensional wave number k
+        """
+        self.u_table = np.linspace(self.u_lim[0], self.u_lim[1], self.u_lim[2])
+
     def set_alpha_beta_delta(self):
         """
         alpha  = A x M, beta = gamma / mu, delta = 1 - A x M
@@ -167,11 +175,19 @@ class VIV(object):
         return the coefficient of the dispersion equation (determinant) 
         also found in self.coefs
         """
-        self.coefs = [1,
-                      0,
-                      - k ** 2 - u ** 2 * (1 - self.A * self.M),
-                      0,
-                      k ** 2 * u ** 2]
+        if self.nu == 0:
+            self.coefs = [1,
+                          0,
+                          - k ** 2 - u ** 2 * (1 - self.A * self.M),
+                          0,
+                          k ** 2 * u ** 2]
+        else:
+            self.coefs = [1,
+                          1j * self.nu * (-self.xi + (self.epsilon - self.beta) * u),
+                          - k ** 2 - u ** 2 * (1 - self.A * self.M) + self.nu ** 2 * self.epsilon * (
+                                      self.beta * u ** 2 + self.xi * u),
+                          1j * self.nu * (self.beta * u ** 3 - self.epsilon * k ** 2 * self.u + self.xi * u ** 2),
+                          k ** 2 * u ** 2]
         return self.coefs
 
     def discriminant(self,k):
@@ -199,13 +215,13 @@ class VIV(object):
     # ***********************************************
     #  PLOTS 
     # ***********************************************
- 
+
     def plot_k_omega_real(self):
         """
 
         """
         plt.figure()
-        plt.title("Real part of $\\omega$\nRivière & Doerfler", usetex=False)
+        plt.title(f"Real part of $\\omega$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.abs(np.real(self.omega)), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Re(\omega)$')
@@ -213,20 +229,12 @@ class VIV(object):
         plt.savefig('Re_omega_k.png')
         plt.show()
 
-
     def plot_k_omega_imag(self):
         """
         Complex part of omega for k
         """
-        # roots = np.zeros_like(self.k_table)
-        # u = 0
-        # for i in np.abs(np.imag(self.omega)):
-        #     for j in i:
-        #         if j != any.roots[u]:
-        #             roots[u] = j
-        #     u += 1
         plt.figure()
-        plt.title("Complexe part of $\\omega$\nRivière & Doerfler", usetex=False)
+        plt.title(f"Complexe part of $\\omega$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.imag(self.omega), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$Im(\omega)$')
@@ -239,7 +247,7 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title("Modulus of $G$\nRivière & Doerfler", usetex=False)
+        plt.title(f"Modulus of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, np.abs(self.gain), 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$|G(\omega)|$')
@@ -252,7 +260,7 @@ class VIV(object):
 
         """
         plt.figure()
-        plt.title("Phase of $G$\nRivière & Doerfler", usetex=False)
+        plt.title(f"Phase of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
         plt.plot(self.k_table, self.phase, 'o')
         plt.xlabel(r"$k$")
         plt.ylabel(r'$\phi_G/\pi$')
