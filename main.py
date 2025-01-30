@@ -13,17 +13,17 @@ from numpy.lib.scimath import sqrt as csqrt
 from viv.defaults import default_parameters
 from viv.viv import VIV
 from viv.tools import test_values
-import matplotlib
-matplotlib.use('TkAgg')
+#import matplotlib
+#matplotlib.use('TkAgg')
 
-cas = 1
+cas = 2
 
 ######### Cas u=1
 if cas == 1:
     par = default_parameters()
     v = VIV(par)
     v.set_alpha_beta_delta()
-    v.set_damping_percentage(0.0)
+    v.set_damping_percentage(0.02)
     v.solve_omega()
     v.get_omega_table()
     v.plot_k_omega_real()
@@ -40,7 +40,7 @@ if cas == 2:
     v.set_alpha_beta_delta()
     v.set_damping_percentage(0.02)
 
-    v.solve_omega_for_u_range()  # Calcule omega pour chaque u
+    v.solve_omega_for_u_range(info=True, print_='all')  # Calcule omega pour chaque u
     v.get_omega_u_inf_sup()
 
     v.plot_u_omega_real()
@@ -55,6 +55,7 @@ if cas == 2:
 ######### Cas u=k=1
 if cas == 3:
     par = default_parameters()
+    par["u_lim"] = [1, 1, 101]
     v = VIV(par)
     v.set_alpha_beta_delta()
     v.set_damping_percentage(0.02)
