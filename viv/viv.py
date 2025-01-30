@@ -42,7 +42,7 @@ class VIV(object):
         self.uinf = self.k_ref / (1 + np.sqrt(self.A * self.M))
         self.usup = self.k_ref / (1 - np.sqrt(self.A * self.M))
 
-        self.omega_u_k_table = par["omega_u_k_table"]
+        self.omega_lim = par["omega_lim"]
 
         self.omega = None
         self.u_k_table = None
@@ -219,7 +219,7 @@ class VIV(object):
         """
         return the array of the non dimensional wave number for u and k fixed
         """
-        self.u_k_table = np.linspace(self.omega_u_k_table[0], self.omega_u_k_table[1], self.omega_u_k_table[2])
+        self.u_k_table = np.linspace(self.omega_lim[0], self.omega_lim[1], self.omega_lim[2])
 
     def set_u_table(self):
         """
