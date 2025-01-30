@@ -123,7 +123,7 @@ class VIV(object):
         """
         self.set_u_k_table()
         for omg in (np.array(self.u_k_table)):
-            gain = self.A * omg ** 2 / (omg ** 2 - self.u_lim[0] ** 2)
+            gain = self.A * omg ** 2 / (omg ** 2 - self.u_lim[0] ** 2 + 1j*self.nu*self.epsilon*omg*self.u_lim[0])
             self.gain.append(gain)
             self.phase.append(np.angle(-gain, deg=False)/np.pi)
 
