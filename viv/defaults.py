@@ -28,6 +28,6 @@ def default_parameters():
     par["k_ref"] = 1                # wave number
     par["k_lim"] = [1, 1, 101]
     par["u_lim"] = [0, 3, 101]
-    par["omega_u_k_table"] = [0 , 2, 101]
+    par["omega_lim"] = [0 , 2, 101]
     par["option"] = dict(verbose=True, plot=True)
     return par
