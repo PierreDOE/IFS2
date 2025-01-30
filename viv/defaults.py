@@ -24,10 +24,12 @@ def default_parameters():
     par["xi"] = 1.                  # tension cable parameter
     par["nu"] = 0                   # 0: no damping, 1 : full case
     par["u"] = 1                    # reduced flow velocity
-    par["epsilon"] = 10**(-4)       # ???
+    par["epsilon"] = 1e-4              # ???
     par["k_ref"] = 1                # wave number
-    par["k_lim"] = [1, 1, 101]
+    par["k_lim"] = [0, 2, 101]
     par["u_lim"] = [0, 3, 101]
-    par["omega_lim"] = [0 , 2, 101]
+    par["omega_lim"] = [0, 2, 101]
     par["option"] = dict(verbose=True, plot=True)
     return par
+
+
