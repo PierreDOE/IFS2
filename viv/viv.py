@@ -13,7 +13,6 @@ class VIV
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-
 from viv.colored_messages import set_section
 
 class VIV(object):
@@ -24,7 +23,7 @@ class VIV(object):
         initialisation
         """
         self.A = par["A"]                       # coupling parameter
-        self.M = par["mass_number"]   # Mass number
+        self.M = par["mass_number"]             # Mass number
         self.mu = par["mu"]                     # mass parameter
         self.gamma = par["gamma"]               # fluid added damping coefficient
         self.xi = par["xi"]                     # tension cable parameter
@@ -40,7 +39,13 @@ class VIV(object):
         self.kinf = self.u * (1 - np.sqrt(self.A * self.M))
         self.ksup = self.u * (1 + np.sqrt(self.A * self.M))
 
+        self.uinf = self.k_ref / (1 + np.sqrt(self.A * self.M))
+        self.usup = self.k_ref / (1 - np.sqrt(self.A * self.M))
+
+        self.omega_u_k_table = par["omega_u_k_table"]
+
         self.omega = None
+        self.u_k_table = None
         self.alpha = None
         self.delta = None
         self.k_table = None
@@ -58,10 +63,31 @@ class VIV(object):
         """
         set_section("solve omega")
         self.set_k_table()
+        #self.set_u_table()
         self.omega = []
         i = 0
         for k in self.k_table:
-            self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True))
+            self.omega.append(sorted(np.roots(self.set_polynomial_coefs(k,self.u)), reverse=True))
+            if print_ != 'all':
+                cond = i % 5 == 0
+            else:
+                cond = True
+            if info and cond:
+                print(f'k = {k:.2f}\tdiscriminant = {self.discriminant(k):.2f}\t\tomega = {sorted(np.roots(self.set_polynomial_coefs(k, self.u)), reverse=True)}')
+            i += 1
+
+    def solve_omega_for_u_range(self, info=False, print_='else'):
+        """
+        Calcule omega pour une plage de valeurs de u.
+        """
+        set_section("solve omega")
+        #self.set_k_table()
+        self.set_u_table()
+        #self.set_u_table()
+        self.omega = []
+        i = 0
+        for u in self.u_table:
+            self.omega.append(sorted(np.roots(self.set_polynomial_coefs(self.k_ref,u)), reverse=True))
             if print_ != 'all':
                 cond = i % 5 == 0
             else:
@@ -79,6 +105,27 @@ class VIV(object):
             gain = self.A * omg ** 2 / (omg ** 2 - self.u ** 2)
             self.gain.append(gain)
             self.phase.append(np.angle(-gain, deg=False))
+    
+    def solve_gain_u(self):
+        """
+        G(omega) = \hat q / \hat y for omega in an interval
+        return gain and phase list for all omega complex variables
+        """
+        for omg, u in zip(np.array(self.omega), self.u_table):
+            gain = self.A * omg ** 2 / (omg ** 2 - self.u ** 2)
+            self.gain.append(gain)
+            self.phase.append(np.angle(-gain, deg=False)/np.pi)
+
+    def solve_gain_u_k(self):
+        """
+        G(omega) = \hat q / \hat y for omega in an interval
+        return gain and phase list for all omega complex variables
+        """
+        self.set_u_k_table()
+        for omg in (np.array(self.u_k_table)):
+            gain = self.A * omg ** 2 / (omg ** 2 - self.u_lim[0] ** 2)
+            self.gain.append(gain)
+            self.phase.append(np.angle(-gain, deg=False)/np.pi)
 
     # ***********************************************
     #  GETTERS
@@ -123,6 +170,22 @@ class VIV(object):
 
         return omega_for_k_inf
 
+    def get_omega_u_inf_sup(self):
+        """
+        Retourne les 4 racines de omega correspondant à la valeur de u dans self.u_table la plus proche de u_inf.
+        """
+        set_section("Get omega inf and sup")
+        u_inf_idx = np.argmin(np.abs(self.u_table - self.uinf))
+        u_sup_idx = np.argmin(np.abs(self.u_table - self.usup))
+        omega_for_u_inf = self.omega[u_inf_idx]
+        omega_for_u_sup = self.omega[u_sup_idx]
+        print(f"Les 4 racines de omega_inf pour u_inf={self.u_table[u_inf_idx]}\u2243{self.uinf} sont :")
+        print(f"Omega inf : \u00b1 {omega_for_u_inf[0].real:.3f} \u00b1 i {omega_for_u_inf[0].imag:.3f}\n")
+        print(f"Les 4 racines de omega_sup pour u_sup={self.u_table[u_sup_idx]}\u2243{self.usup} sont :")
+        print(f"Omega inf : \u00b1 {omega_for_u_sup[0].real:.3f} \u00b1 i {omega_for_u_sup[0].imag:.3f}")
+
+        return omega_for_u_inf
+
     def get_parameters(self):
         """
         display parameters
@@ -151,6 +214,12 @@ class VIV(object):
         return the array of the non dimensional wave number k
         """
         self.k_table = np.linspace(self.k_lim[0], self.k_lim[1], self.k_lim[2])
+    
+    def set_u_k_table(self):
+        """
+        return the array of the non dimensional wave number for u and k fixed
+        """
+        self.u_k_table = np.linspace(self.omega_u_k_table[0], self.omega_u_k_table[1], self.omega_u_k_table[2])
 
     def set_u_table(self):
         """
@@ -215,6 +284,57 @@ class VIV(object):
     # ***********************************************
     #  PLOTS 
     # ***********************************************
+    def plot_u_omega_real(self):
+        """Real part of omega for u
+        """
+        plt.figure()
+        plt.title(f"Real part of $\\omega$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_table, np.abs(np.real(self.omega)), 'o')
+        plt.xlabel(r"$u$")
+        plt.ylabel(r'$Re(\omega)$')
+        plt.grid()
+        plt.savefig('Re_omega_u.png')
+        plt.show()
+
+    def plot_u_omega_imag(self):
+        """
+        Complex part of omega for u
+        """
+        plt.figure()
+        plt.title(f"Complexe part of $\\omega$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_table, np.imag(self.omega), 'o')
+        plt.xlabel(r"$u$")
+        plt.ylabel(r'$Im(\omega)$')
+        plt.grid()
+        plt.savefig('Im_omega_u.png')
+        plt.show()
+
+    def plot_u_gain_modulus(self):
+        """
+
+        """
+        plt.figure()
+        plt.title(f"Modulus of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_table, np.abs(self.gain), 'o')
+        plt.ylim([0,80])
+        plt.xlabel(r"$u$")
+        plt.ylabel(r'$|G(\omega)|$')
+        plt.grid()
+        plt.savefig('modulus_omega_u')
+        plt.show()
+
+    def plot_u_gain_phase(self):
+        """
+
+        """
+        plt.figure()
+        plt.title(f"Phase of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_table, self.phase, 'o')
+        plt.xlabel(r"$u$")
+        plt.ylabel(r'$\phi_G/\pi$')
+        plt.grid()
+        plt.savefig('Gain_omega_u')
+        plt.show()
 
     def plot_k_omega_real(self):
         """
@@ -266,4 +386,30 @@ class VIV(object):
         plt.ylabel(r'$\phi_G/\pi$')
         plt.grid()
         plt.savefig('Gain_omega_k')
+        plt.show()
+
+    def plot_u_k_gain_modulus(self):
+        """
+
+        """
+        plt.figure()
+        plt.title(f"Modulus of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_k_table, np.abs(self.gain), 'o')
+        plt.xlabel(r"$omega$")
+        plt.ylabel(r'$|G(\omega)|$')
+        plt.grid()
+        plt.savefig('modulus_omega_u_k')
+        plt.show()
+
+    def plot_u_k_gain_phase(self):
+        """
+
+        """
+        plt.figure()
+        plt.title(f"Phase of $G$ for $\\nu={self.nu}$\nRivière & Doerfler", usetex=False)
+        plt.plot(self.u_k_table, self.phase, 'o')
+        plt.xlabel(r"$omega$")
+        plt.ylabel(r'$\phi_G/\pi$')
+        plt.grid()
+        plt.savefig('Gain_omega_u_k')
         plt.show()
